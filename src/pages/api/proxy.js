@@ -26,20 +26,12 @@ module.exports = (req, res) => {
         changeOrigin: true,
         on: {
             proxyRes: responseInterceptor(async (responseBuffer, proxyRes, req, res) => {
-                // Skip text replacement for JavaScript files and other assets to prevent syntax errors
-                const contentType = proxyRes.headers['content-type'] || '';
-                if (contentType.includes('javascript') || 
-                    contentType.includes('application/json') || 
-                    req.url.endsWith('.js') || 
-                    req.url.endsWith('.json') ||
-                    req.url.endsWith('.css')) {
+                // Skip text replacement for JavaScript files to prevent syntax errors
+                if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('javascript')) {
                     return responseBuffer;
                 }
                 
                 if (!['image/png', 'image/jpg', 'image/jpeg', 'image/gif'].includes(proxyRes.headers['content-type'])) {
-                    // Skip text replacement entirely to prevent URL corruption
-                    let content = responseBuffer.toString('utf8');
-                    
                     const additionalJS = `
                         <script>
                             setInterval(function() {
@@ -97,10 +89,15 @@ module.exports = (req, res) => {
                             }, 100);
                         </script>
                     `;
-                    // Apply analytics replacement and inject additional JS/CSS
-                    content = content.replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>');
-                    
-                    return content;
+                     let content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], responseBuffer.toString('utf8'));
+                     
+                     // Replace Vercel deployment URLs with your domain
+                     content = content.replace(/cynexflow-[a-z0-9]+-nadeejakalharas-projects-[a-z0-9]+\.vercel\.app/g, 'flow.cynex.lk');
+                     
+                     // Apply analytics replacement and inject additional JS/CSS
+                     content = content.replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>');
+                     
+                     return content;
                 }
                 let image = await Jimp.read(responseBuffer)
                 image.flip(true, false).sepia().pixelate(1)
