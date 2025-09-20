@@ -26,12 +26,53 @@ module.exports = (req, res) => {
         changeOrigin: true,
         on: {
             proxyRes: responseInterceptor(async (responseBuffer, proxyRes, req, res) => {
-                // Skip text replacement for JavaScript files to prevent syntax errors
-                if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].includes('javascript')) {
+                // Skip text replacement for JavaScript files and other assets to prevent syntax errors
+                const contentType = proxyRes.headers['content-type'] || '';
+                if (contentType.includes('javascript') || 
+                    contentType.includes('application/json') || 
+                    req.url.endsWith('.js') || 
+                    req.url.endsWith('.json') ||
+                    req.url.endsWith('.css')) {
                     return responseBuffer;
                 }
                 
                 if (!['image/png', 'image/jpg', 'image/jpeg', 'image/gif'].includes(proxyRes.headers['content-type'])) {
+                    // Apply text replacement but protect URLs from being corrupted
+                    let content = responseBuffer.toString('utf8');
+                    
+                    // Temporarily protect URLs from text replacement
+                    const urlRegex = /https?:\/\/[^\s"'<>]+/g;
+                    const urls = content.match(urlRegex) || [];
+                    const protectedUrls = urls.map((url, index) => `__PROTECTED_URL_${index}__`);
+                    
+                    // Replace URLs with placeholders (use a more robust replacement)
+                    urls.forEach((url, index) => {
+                        const placeholder = `__PROTECTED_URL_${index}__`;
+                        content = content.split(url).join(placeholder);
+                    });
+                    
+                    // Also protect relative URLs that might be corrupted
+                    const relativeUrlRegex = /[a-zA-Z0-9-]+\.vercel\.app[a-zA-Z0-9\/\-\.]+/g;
+                    const relativeUrls = content.match(relativeUrlRegex) || [];
+                    relativeUrls.forEach((url, index) => {
+                        const placeholder = `__PROTECTED_RELATIVE_URL_${index}__`;
+                        content = content.split(url).join(placeholder);
+                    });
+                    
+                    // Apply text replacement
+                    content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], content);
+                    
+                    // Restore relative URLs first
+                    relativeUrls.forEach((url, index) => {
+                        const placeholder = `__PROTECTED_RELATIVE_URL_${index}__`;
+                        content = content.replace(placeholder, url);
+                    });
+                    
+                    // Restore URLs
+                    protectedUrls.forEach((placeholder, index) => {
+                        content = content.replace(placeholder, urls[index]);
+                    });
+                    
                     const additionalJS = `
                         <script>
                             setInterval(function() {
@@ -89,7 +130,10 @@ module.exports = (req, res) => {
                             }, 100);
                         </script>
                     `;
-                    return replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], responseBuffer.toString('utf8')).replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>')
+                    // Apply analytics replacement and inject additional JS/CSS
+                    content = content.replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>');
+                    
+                    return content;
                 }
                 let image = await Jimp.read(responseBuffer)
                 image.flip(true, false).sepia().pixelate(1)
