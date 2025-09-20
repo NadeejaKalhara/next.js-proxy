@@ -34,10 +34,10 @@ module.exports = (req, res) => {
                 if (!['image/png', 'image/jpg', 'image/jpeg', 'image/gif'].includes(proxyRes.headers['content-type'])) {
                     const additionalJS = `
                         <script>
-                            setInterval(function() {
-                                // Use relative URLs for logos to avoid complex Vercel URLs
-                                const logoUrl = '/logodark.png';
-                                const lightLogoUrl = '/logo.png';
+                             setInterval(function() {
+                                 // Use absolute URLs with correct domain to avoid Vercel deployment URLs
+                                 const logoUrl = 'https://flow.cynex.lk/logodark.png';
+                                 const lightLogoUrl = 'https://flow.cynex.lk/logo.png';
                                 
                                 // Replace document title from Stockifly to CynexFlow
                                 if (document.title.includes('Stockifly')) {
