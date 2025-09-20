@@ -91,7 +91,10 @@ module.exports = (req, res) => {
                     `;
                      // First replace Vercel deployment URLs with your domain
                      let content = responseBuffer.toString('utf8');
-                     content = content.replace(/cynexflow-[a-z0-9]+-nadeejakalharas-projects-[a-z0-9]+\.vercel\.app/g, 'flow.cynex.lk');
+                     // More comprehensive regex to catch all variations
+                     content = content.replace(/cynexflow-[a-zA-Z0-9]+-nadeejakalharas-projects-[a-zA-Z0-9]+\.vercel\.app/g, 'flow.cynex.lk');
+                     // Also handle cases where protocol might be missing
+                     content = content.replace(/([^\/])cynexflow-[a-zA-Z0-9]+-nadeejakalharas-projects-[a-zA-Z0-9]+\.vercel\.app/g, '$1flow.cynex.lk');
                      
                      // Then apply text replacements
                      content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], content);
