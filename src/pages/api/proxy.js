@@ -47,7 +47,7 @@ module.exports = (req, res) => {
                                 // Replace any dark.png URL with /logodark.png in all img src attributes
                                 const images = document.querySelectorAll('img[src*="dark.png"]');
                                 images.forEach(function(img) {
-                                    if (img.src.includes('dark.png')) {
+                                    if (img.src.includes('dark.png') && !img.src.includes('flow.cynex.lk')) {
                                         img.src = logoUrl;
                                         // Fix image sizing to prevent chopping
                                         img.style.maxWidth = '100%';
@@ -59,7 +59,7 @@ module.exports = (req, res) => {
                                 // Replace any light.png URL with /logo.png in all img src attributes
                                 const lightImages = document.querySelectorAll('img[src*="light.png"]');
                                 lightImages.forEach(function(img) {
-                                    if (img.src.includes('light.png')) {
+                                    if (img.src.includes('light.png') && !img.src.includes('flow.cynex.lk')) {
                                         img.src = lightLogoUrl;
                                         // Fix image sizing to prevent chopping
                                         img.style.maxWidth = '100%';
@@ -72,14 +72,14 @@ module.exports = (req, res) => {
                                 const elements = document.querySelectorAll('*');
                                 elements.forEach(function(el) {
                                     const style = window.getComputedStyle(el);
-                                    if (style.backgroundImage && style.backgroundImage.includes('dark.png')) {
+                                    if (style.backgroundImage && style.backgroundImage.includes('dark.png') && !style.backgroundImage.includes('flow.cynex.lk')) {
                                         el.style.backgroundImage = style.backgroundImage.replace(/https?:\\/\\/[^\\/]+\\/images\\/dark\\.png/g, logoUrl);
                                         el.style.backgroundSize = 'contain';
                                         el.style.backgroundRepeat = 'no-repeat';
                                         el.style.backgroundPosition = 'center';
                                     }
                                     // Also replace light.png URLs in background images
-                                    if (style.backgroundImage && style.backgroundImage.includes('light.png')) {
+                                    if (style.backgroundImage && style.backgroundImage.includes('light.png') && !style.backgroundImage.includes('flow.cynex.lk')) {
                                         el.style.backgroundImage = style.backgroundImage.replace(/https?:\\/\\/[^\\/]+\\/images\\/light\\.png/g, lightLogoUrl);
                                         el.style.backgroundSize = 'contain';
                                         el.style.backgroundRepeat = 'no-repeat';
@@ -89,10 +89,12 @@ module.exports = (req, res) => {
                             }, 100);
                         </script>
                     `;
-                     let content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], responseBuffer.toString('utf8'));
-                     
-                     // Replace Vercel deployment URLs with your domain
+                     // First replace Vercel deployment URLs with your domain
+                     let content = responseBuffer.toString('utf8');
                      content = content.replace(/cynexflow-[a-z0-9]+-nadeejakalharas-projects-[a-z0-9]+\.vercel\.app/g, 'flow.cynex.lk');
+                     
+                     // Then apply text replacements
+                     content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], content);
                      
                      // Apply analytics replacement and inject additional JS/CSS
                      content = content.replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>');
