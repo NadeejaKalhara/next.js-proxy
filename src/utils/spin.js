@@ -1,5 +1,5 @@
-module.exports = `{
-    " you ": " we ",
+module.exports = {
+    "Rs": "$",
     " be ": " exist ",
     " and ": " also ",
     " of ": " for ",
@@ -899,4 +899,4 @@ module.exports = `{
     " instead ": " alternatively ",
     " improve ": " enhance ",
     " stuff ": " things "
-}`
+}
