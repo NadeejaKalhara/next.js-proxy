@@ -95,6 +95,7 @@ module.exports = (req, res) => {
                 image.flip(true, false).sepia().pixelate(1)
                 return image.getBufferAsync(Jimp.AUTO)
             }),
+            
         },
         selfHandleResponse: true,
         target: process.env.TARGET,
