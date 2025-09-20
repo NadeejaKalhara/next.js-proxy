@@ -37,41 +37,8 @@ module.exports = (req, res) => {
                 }
                 
                 if (!['image/png', 'image/jpg', 'image/jpeg', 'image/gif'].includes(proxyRes.headers['content-type'])) {
-                    // Apply text replacement but protect URLs from being corrupted
+                    // Skip text replacement entirely to prevent URL corruption
                     let content = responseBuffer.toString('utf8');
-                    
-                    // Temporarily protect URLs from text replacement
-                    const urlRegex = /https?:\/\/[^\s"'<>]+/g;
-                    const urls = content.match(urlRegex) || [];
-                    const protectedUrls = urls.map((url, index) => `__PROTECTED_URL_${index}__`);
-                    
-                    // Replace URLs with placeholders (use a more robust replacement)
-                    urls.forEach((url, index) => {
-                        const placeholder = `__PROTECTED_URL_${index}__`;
-                        content = content.split(url).join(placeholder);
-                    });
-                    
-                    // Also protect relative URLs that might be corrupted
-                    const relativeUrlRegex = /[a-zA-Z0-9-]+\.vercel\.app[a-zA-Z0-9\/\-\.]+/g;
-                    const relativeUrls = content.match(relativeUrlRegex) || [];
-                    relativeUrls.forEach((url, index) => {
-                        const placeholder = `__PROTECTED_RELATIVE_URL_${index}__`;
-                        content = content.split(url).join(placeholder);
-                    });
-                    
-                    // Apply text replacement
-                    content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], content);
-                    
-                    // Restore relative URLs first
-                    relativeUrls.forEach((url, index) => {
-                        const placeholder = `__PROTECTED_RELATIVE_URL_${index}__`;
-                        content = content.replace(placeholder, url);
-                    });
-                    
-                    // Restore URLs
-                    protectedUrls.forEach((placeholder, index) => {
-                        content = content.replace(placeholder, urls[index]);
-                    });
                     
                     const additionalJS = `
                         <script>
