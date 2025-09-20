@@ -31,8 +31,7 @@ function replaceFunc(data, content) {
 
     data.forEach((i) => obj = assign(i, obj))
 
-    // Skip TARGET replacement to prevent URL corruption
-    // obj[process.env.TARGET] = ''
+    obj[process.env.TARGET] = (!checkFunc(process.env.VERCEL_URL)) ? process.env.VERCEL_URL : ''
 
     result = result.replace(new RegExp(Object.keys(obj).join("|"), "g"), (m) => obj[m])
 

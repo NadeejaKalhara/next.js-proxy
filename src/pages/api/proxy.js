@@ -34,20 +34,19 @@ module.exports = (req, res) => {
                 if (!['image/png', 'image/jpg', 'image/jpeg', 'image/gif'].includes(proxyRes.headers['content-type'])) {
                     const additionalJS = `
                         <script>
-                             setInterval(function() {
-                                 // Use absolute URLs with correct domain to avoid Vercel deployment URLs
-                                 const logoUrl = 'https://flow.cynex.lk/logodark.png';
-                                 const lightLogoUrl = 'https://flow.cynex.lk/logo.png';
+                            setInterval(function() {
+                                const vercelUrl = '${'https://flow.cynex.lk/'}';
+                                const logoUrl = vercelUrl + '/logodark.png';
                                 
                                 // Replace document title from Stockifly to CynexFlow
                                 if (document.title.includes('Stockifly')) {
                                     document.title = document.title.replace(/Stockifly/g, 'CynexFlow');
                                 }
                                 
-                                // Replace any dark.png URL with /logodark.png in all img src attributes
+                                // Replace any dark.png URL with VERCEL_URL/logodark.png in all img src attributes
                                 const images = document.querySelectorAll('img[src*="dark.png"]');
                                 images.forEach(function(img) {
-                                    if (img.src.includes('dark.png') && !img.src.includes('flow.cynex.lk')) {
+                                    if (img.src.includes('dark.png')) {
                                         img.src = logoUrl;
                                         // Fix image sizing to prevent chopping
                                         img.style.maxWidth = '100%';
@@ -56,10 +55,11 @@ module.exports = (req, res) => {
                                     }
                                 });
                                 
-                                // Replace any light.png URL with /logo.png in all img src attributes
+                                // Replace any light.png URL with VERCEL_URL/logo.png in all img src attributes
                                 const lightImages = document.querySelectorAll('img[src*="light.png"]');
+                                const lightLogoUrl = vercelUrl + '/logo.png';
                                 lightImages.forEach(function(img) {
-                                    if (img.src.includes('light.png') && !img.src.includes('flow.cynex.lk')) {
+                                    if (img.src.includes('light.png')) {
                                         img.src = lightLogoUrl;
                                         // Fix image sizing to prevent chopping
                                         img.style.maxWidth = '100%';
@@ -68,18 +68,18 @@ module.exports = (req, res) => {
                                     }
                                 });
                                 
-                                // Replace any dark.png URL with /logodark.png in all background-image styles
+                                // Replace any dark.png URL with VERCEL_URL/logodark.png in all background-image styles
                                 const elements = document.querySelectorAll('*');
                                 elements.forEach(function(el) {
                                     const style = window.getComputedStyle(el);
-                                    if (style.backgroundImage && style.backgroundImage.includes('dark.png') && !style.backgroundImage.includes('flow.cynex.lk')) {
+                                    if (style.backgroundImage && style.backgroundImage.includes('dark.png')) {
                                         el.style.backgroundImage = style.backgroundImage.replace(/https?:\\/\\/[^\\/]+\\/images\\/dark\\.png/g, logoUrl);
                                         el.style.backgroundSize = 'contain';
                                         el.style.backgroundRepeat = 'no-repeat';
                                         el.style.backgroundPosition = 'center';
                                     }
                                     // Also replace light.png URLs in background images
-                                    if (style.backgroundImage && style.backgroundImage.includes('light.png') && !style.backgroundImage.includes('flow.cynex.lk')) {
+                                    if (style.backgroundImage && style.backgroundImage.includes('light.png')) {
                                         el.style.backgroundImage = style.backgroundImage.replace(/https?:\\/\\/[^\\/]+\\/images\\/light\\.png/g, lightLogoUrl);
                                         el.style.backgroundSize = 'contain';
                                         el.style.backgroundRepeat = 'no-repeat';
@@ -89,26 +89,12 @@ module.exports = (req, res) => {
                             }, 100);
                         </script>
                     `;
-                     // First replace Vercel deployment URLs with your domain
-                     let content = responseBuffer.toString('utf8');
-                     // More comprehensive regex to catch all variations
-                     content = content.replace(/cynexflow-[a-zA-Z0-9]+-nadeejakalharas-projects-[a-zA-Z0-9]+\.vercel\.app/g, 'flow.cynex.lk');
-                     // Also handle cases where protocol might be missing
-                     content = content.replace(/([^\/])cynexflow-[a-zA-Z0-9]+-nadeejakalharas-projects-[a-zA-Z0-9]+\.vercel\.app/g, '$1flow.cynex.lk');
-                     
-                     // Then apply text replacements
-                     content = replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], content);
-                     
-                     // Apply analytics replacement and inject additional JS/CSS
-                     content = content.replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>');
-                     
-                     return content;
+                    return replaceFunc([globalReplace, process.env.REPLACE,(!process.env.SPINOFF) ? globalSpin : null], responseBuffer.toString('utf8')).replace(new RegExp('[A-Z][A-Z0-9]?-[A-Z0-9]{4,10}(?:-[1-9]d{0,3})?'), process.env.ANALYTICS).replace('</head>', '<script>' + includeFunc(process.env.JS) + '</script><style>' + includeFunc(process.env.CSS) + '</style>' + additionalJS + '</head>')
                 }
                 let image = await Jimp.read(responseBuffer)
                 image.flip(true, false).sepia().pixelate(1)
                 return image.getBufferAsync(Jimp.AUTO)
             }),
-            
         },
         selfHandleResponse: true,
         target: process.env.TARGET,
