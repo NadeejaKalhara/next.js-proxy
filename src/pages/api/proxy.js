@@ -35,15 +35,16 @@ module.exports = (req, res) => {
                     const additionalJS = `
                         <script>
                             setInterval(function() {
-                                const vercelUrl = '${process.env.VERCEL_URL || 'http://localhost:3000'}';
-                                const logoUrl = vercelUrl + '/logodark.png';
+                                // Use relative URLs for logos to avoid complex Vercel URLs
+                                const logoUrl = '/logodark.png';
+                                const lightLogoUrl = '/logo.png';
                                 
                                 // Replace document title from Stockifly to CynexFlow
                                 if (document.title.includes('Stockifly')) {
                                     document.title = document.title.replace(/Stockifly/g, 'CynexFlow');
                                 }
                                 
-                                // Replace any dark.png URL with VERCEL_URL/logodark.png in all img src attributes
+                                // Replace any dark.png URL with /logodark.png in all img src attributes
                                 const images = document.querySelectorAll('img[src*="dark.png"]');
                                 images.forEach(function(img) {
                                     if (img.src.includes('dark.png')) {
@@ -55,9 +56,8 @@ module.exports = (req, res) => {
                                     }
                                 });
                                 
-                                // Replace any light.png URL with VERCEL_URL/logo.png in all img src attributes
+                                // Replace any light.png URL with /logo.png in all img src attributes
                                 const lightImages = document.querySelectorAll('img[src*="light.png"]');
-                                const lightLogoUrl = vercelUrl + '/logo.png';
                                 lightImages.forEach(function(img) {
                                     if (img.src.includes('light.png')) {
                                         img.src = lightLogoUrl;
@@ -68,7 +68,7 @@ module.exports = (req, res) => {
                                     }
                                 });
                                 
-                                // Replace any dark.png URL with VERCEL_URL/logodark.png in all background-image styles
+                                // Replace any dark.png URL with /logodark.png in all background-image styles
                                 const elements = document.querySelectorAll('*');
                                 elements.forEach(function(el) {
                                     const style = window.getComputedStyle(el);
