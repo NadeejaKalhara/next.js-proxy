@@ -88,41 +88,11 @@ module.exports = (req, res) => {
                                 color: #fff;
                                 font-size: 14px;
                                 font-family: Arial, sans-serif;
-                                margin-bottom: 20px;
-                            }
-                            
-                            /* Progress bar styles */
-                            #cynex-progress {
-                                width: 300px;
-                                height: 4px;
-                                background-color: #333;
-                                border-radius: 2px;
-                                overflow: hidden;
-                                margin-bottom: 10px;
-                            }
-                            
-                            #cynex-progress-bar {
-                                height: 100%;
-                                background: linear-gradient(90deg, #4F46E5, #7C3AED);
-                                width: 0%;
-                                transition: width 0.3s ease;
-                                border-radius: 2px;
-                            }
-                            
-                            #cynex-progress-text {
-                                color: #fff;
-                                font-size: 12px;
-                                font-family: Arial, sans-serif;
-                                text-align: center;
                             }
                         </style>
                         <div id="cynex-loading">
                             <img src="https://flow.cynex.lk/logo.png" alt="Cynex" />
                             <div class="loading-text">Loading Cynex Invoicing...</div>
-                            <div id="cynex-progress">
-                                <div id="cynex-progress-bar"></div>
-                            </div>
-                            <div id="cynex-progress-text">0%</div>
                         </div>
                         <script>
                             // Immediate logo replacement - no delay
@@ -141,35 +111,6 @@ module.exports = (req, res) => {
                                 
                                 // Track if logos have been replaced
                                 let logosReplaced = false;
-                                
-                                // Progress bar animation
-                                let progress = 0;
-                                const progressBar = document.getElementById('cynex-progress-bar');
-                                const progressText = document.getElementById('cynex-progress-text');
-                                
-                                function updateProgress(percent) {
-                                    progress = Math.min(percent, 100);
-                                    if (progressBar) {
-                                        progressBar.style.width = progress + '%';
-                                    }
-                                    if (progressText) {
-                                        progressText.textContent = Math.round(progress) + '%';
-                                    }
-                                }
-                                
-                                // Animate progress bar to 100% over 15 seconds
-                                const startTime = Date.now();
-                                const duration = 15000; // 15 seconds
-                                
-                                const progressInterval = setInterval(function() {
-                                    const elapsed = Date.now() - startTime;
-                                    const progressPercent = Math.min((elapsed / duration) * 100, 100);
-                                    updateProgress(progressPercent);
-                                    
-                                    if (progressPercent >= 100) {
-                                        clearInterval(progressInterval);
-                                    }
-                                }, 50); // Update every 50ms for smooth animation
                                 
                                 // Check if logos have been replaced
                                 function checkLogosReplaced() {
@@ -200,15 +141,16 @@ module.exports = (req, res) => {
                                     
                                     if (!hasOriginalLogos && (darkImages.length > 0 || lightImages.length > 0 || invoiceninjaImages.length > 0)) {
                                         logosReplaced = true;
-                                        // Don't hide immediately - let the 15-second timer handle it
-                                        // This ensures the progress bar completes its full animation
+                                        hideLoadingScreen();
                                     }
                                 }
                                 
-                                // Hide loading screen after 15 seconds (when progress reaches 100%)
+                                // Hide loading screen after 8 seconds maximum (fallback)
                                 setTimeout(function() {
-                                    hideLoadingScreen();
-                                }, 15000);
+                                    if (!logosReplaced) {
+                                        hideLoadingScreen();
+                                    }
+                                }, 8000);
                                 
                                 // Replace images immediately
                                 function replaceImages() {
